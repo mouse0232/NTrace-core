@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"sync"
 	"time"
-
+	"strings" 
 	"github.com/tidwall/gjson"
 
 	"github.com/nxtrace/NTrace-core/wshandle"
@@ -49,10 +49,66 @@ func receiveParse() {
 		// json解析 -> data
 		res := gjson.Parse(data)
 		// 根据返回的IP信息，发送给对应等待回复的IP通道上
-		var domain = res.Get("domain").String()
+		var owner = res.Get("owner").String()
 
-		if res.Get("domain").String() == "" {
-			domain = res.Get("owner").String()
+		if res.Get("owner").String() == "" {
+			owner = res.Get("isp").String()
+		}
+		// 在 leo.go 中找到 receiveParse 函数中的这段代码，大约在 50-90 行之间
+
+		// 修改为正确的版本：
+		var whois = res.Get("whois").String()
+		if whois == "" {
+			asnumber := res.Get("asnumber").String() // 正确获取 asnumber
+			if asnumber != "" {
+				switch asnumber {
+				case "4809":
+					whois = "电信CN2"
+				case "4134":
+					whois = "电信163"
+				case "23764":
+					whois = "电信CTGNet"
+				case "36678":
+					whois = "电信CTA"
+				case "49209":
+					whois = "电信CTE"
+				case "10099":
+					whois = "联通CUG"
+				case "9929":
+					whois = "联通CUII"
+				case "4837":
+					whois = "联通169"
+				case "AS19174":
+					whois = "联通CUA"
+				case "58807":
+					whois = "移动CMIN2"
+				case "58453":
+					whois = "移动CMI"
+				case "268862":
+					whois = "移动CMBRA"
+				case "9231", "137872":
+					whois = "移动CMHK"
+				case "209141":
+					whois = "移动CMRU"
+				}
+			} else {
+				ipStr := res.Get("ip").String()
+				if strings.Contains(owner, "China Telecom Global") || strings.Contains(owner, "Chinatelecom global") {
+					whois = "电信CTGNet"
+				} else if strings.Contains(owner, "CHINA TELECOM (AMERICAS)") || strings.Contains(owner, "China Telecom AMERICAS") {
+					whois = "电信CTA"
+				} else if strings.Contains(owner, "China Telecom (Europe)") || strings.Contains(owner, "China Telecom Europe") {
+					whois = "电信CTE"
+				} else if strings.Contains(owner, "China Unicom Global") || strings.Contains(owner, "China Unicom (Hong Kong)") {
+					whois = "联通CUG"
+				} else if strings.Contains(owner, "China Mobile International") {
+					whois = "移动CMI"
+				} else if strings.HasPrefix(ipStr, "59.43.") {
+					whois = "电信CN2"
+				} else if strings.HasPrefix(ipStr, "210.78.") {
+					whois = "联通CUII"
+				}
+			}
 		}
 
 		m := make(map[string][]string)
@@ -74,11 +130,11 @@ func receiveParse() {
 			City:      res.Get("city").String(),
 			CityEn:    res.Get("city_en").String(),
 			District:  res.Get("district").String(),
-			Owner:     domain,
+			Owner:     owner,
 			Lat:       lat,
 			Lng:       lng,
 			Isp:       res.Get("isp").String(),
-			Whois:     res.Get("whois").String(),
+			Whois:     whois, // 使用修正后的 whois 变量
 			Prefix:    res.Get("prefix").String(),
 			Router:    m,
 		}

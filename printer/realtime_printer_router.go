@@ -93,8 +93,8 @@ func RealtimePrinterWithRouter(res *trace.Result, ttl int) {
 		if util.EnableHidDstIP && ip == util.DstIP {
 			hostname = ""
 		}
-
-		if net.ParseIP(ip).To4() != nil {
+		ipAddr := net.ParseIP(ip)
+		if ipAddr != nil {
 			fmt.Fprintf(color.Output, " %s %s %s %s %s\n    %s   ",
 				color.New(color.FgWhite, color.Bold).Sprintf("%s", res.Hops[ttl][i].Geo.Country),
 				color.New(color.FgWhite, color.Bold).Sprintf("%s", res.Hops[ttl][i].Geo.Prov),

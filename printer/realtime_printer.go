@@ -101,8 +101,8 @@ func RealtimePrinter(res *trace.Result, ttl int) {
 		} else {
 			fmt.Printf(" %-8s", "*")
 		}
-
-		if net.ParseIP(ip).To4() != nil {
+		ipAddr := net.ParseIP(ip)
+		if ipAddr != nil {
 			whoisFormat := strings.Split(res.Hops[ttl][i].Geo.Whois, "-")
 			if len(whoisFormat) > 1 {
 				whoisFormat[0] = strings.Join(whoisFormat[:2], "-")
